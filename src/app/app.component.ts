@@ -151,8 +151,8 @@ export class AppComponent {
     }
 
     public static placeWordPart(word: string, algs: PlacementFunction[], table: Table, minLength: number, maxLength: number): number {
-        let segmentLength = AppComponent.random(minLength, maxLength);
-        let segmentStart = AppComponent.random(0, word.length - segmentLength);
+        let segmentLength = AppComponent.random(minLength, maxLength + 1);
+        let segmentStart = AppComponent.random(0, word.length - segmentLength + 1);
         let segment = word.substr(segmentStart, segmentLength);
         if (AppComponent.placeWord(segment, algs, table)) {
             return segment.length;
