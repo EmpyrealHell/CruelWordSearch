@@ -3,7 +3,7 @@ import { Component, NgModule, VERSION } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 
-export type PlacementFunction = ((word:string, x: number, y: number, rows: Table, affix?: string) => boolean);
+export type PlacementFunction = ((word:string, x: number, y: number, rows: Table, keyWord: string) => boolean);
 
 export class Table {
     public static readonly nbsp = '\u00A0';
@@ -54,7 +54,7 @@ export class AppComponent {
         return Math.floor(Math.random() * (upperBound - lowerBound)) + lowerBound;
     }
 
-    public static placeLetters(word: string, x: number, y: number, table: Table, xDir: number, yDir: number, affix?: string): boolean {
+    public static placeLetters(word: string, x: number, y: number, table: Table, xDir: number, yDir: number, keyWord: string): boolean {
         let width = table.columns;
         let height = table.rows;
 
@@ -82,44 +82,47 @@ export class AppComponent {
         }
         for (let i = 0; i < word.length; i++) {
             let char = word.substr(i, 1);
-            if (affix) {
-                char += affix;
-            }
             table.data[y + i * yDir][x + i * xDir] = char;
+        }
+        if (AppComponent.totalWordCount(keyWord, table) > 1) {
+            for (let i = 0; i < word.length; i++) {
+                table.data[y + i * yDir][x + i * xDir] = Table.nbsp;
+            }
+            return false
         }
         return true;
     }
 
-    public static placeLtR(word: string, x: number, y: number, table: Table, affix?: string): boolean {
-        return AppComponent.placeLetters(word, x, y, table, 1, 0, affix);
+    public static placeLtR(word: string, x: number, y: number, table: Table, keyWord: string): boolean {
+        return AppComponent.placeLetters(word, x, y, table, 1, 0, keyWord);
     }
 
-    public static placeRtL(word: string, x: number, y: number, table: Table, affix?: string): boolean {
-        return AppComponent.placeLetters(word, x, y, table, -1, 0, affix);
+    public static placeRtL(word: string, x: number, y: number, table: Table, keyWord: string): boolean {
+        return AppComponent.placeLetters(word, x, y, table, -1, 0, keyWord);
     }
 
-    public static placeTtB(word: string, x: number, y: number, table: Table, affix?: string): boolean {
-        return AppComponent.placeLetters(word, x, y, table, 0, 1, affix);
+    public static placeTtB(word: string, x: number, y: number, table: Table, keyWord: string): boolean {
+        return AppComponent.placeLetters(word, x, y, table, 0, 1, keyWord);
     }
 
-    public static placeBtT(word: string, x: number, y: number, table: Table, affix?: string): boolean {
-        return AppComponent.placeLetters(word, x, y, table, 0, -1, affix);
+    public static placeBtT(word: string, x: number, y: number, table: Table, keyWord: string): boolean {
+        return AppComponent.placeLetters(word, x, y, table, 0, -1, keyWord);
     }
 
-    public static placeDDR(word: string, x: number, y: number, table: Table, affix?: string): boolean {
-        return AppComponent.placeLetters(word, x, y, table, 1, 1, affix);
+    public static placeDDR(word: string, x: number, y: number, table: Table, keyWord: string): boolean {
+        return AppComponent.placeLetters(word, x, y, table, 1, 1, keyWord);
     }
 
-    public static placeDDL(word: string, x: number, y: number, table: Table, affix?: string): boolean {
-        return AppComponent.placeLetters(word, x, y, table, -1, 1, affix);
+    public static placeDDL(word: string, x: number, y: number, table: Table, keyWord: string): boolean {
+        return AppComponent.placeLetters(word, x, y, table, -1, 1, keyWord);
     }
 
-    public static placeDUR(word: string, x: number, y: number, table: Table, affix?: string): boolean {
-        return AppComponent.placeLetters(word, x, y, table, 1, -1, affix);
+    public static placeDUR(word: string, x: number, y: number, table: Table, keyWord: string): boolean {
+        return AppComponent.placeLetters(word, x, y, table, 1, -1, keyWord);
     }
 
-    public static placeDUL(word: string, x: number, y: number, table: Table, affix?: string): boolean {
-        return AppComponent.placeLetters(word, x, y, table, -1, -1, affix);
+    public static placeDUL(word: string, x: number, y: number, table: Table, keyWord: string): boolean {
+        return AppComponent.placeLetters(word, x, y, table, -1, -1, keyWord);
     }
 
     public static listAlgorithms(length: number, width: number, height: number): PlacementFunction[] {
@@ -143,24 +146,26 @@ export class AppComponent {
         return arrangements;
     }
 
-    public static placeWord(word: string, algs: PlacementFunction[], table: Table): boolean {
+    public static placeWord(word: string, algs: PlacementFunction[], table: Table, keyWord: string): boolean {
         let x = AppComponent.random(0, table.columns);
         let y = AppComponent.random(0, table.rows);
         let alg = AppComponent.random(0, algs.length);
-        return algs[alg](word, x, y, table);
+        return algs[alg](word, x, y, table, keyWord);
     }
 
     public static placeWordPart(word: string, algs: PlacementFunction[], table: Table, minLength: number, maxLength: number): number {
         let segmentLength = AppComponent.random(minLength, maxLength + 1);
         let segmentStart = AppComponent.random(0, word.length - segmentLength + 1);
         let segment = word.substr(segmentStart, segmentLength);
-        if (AppComponent.placeWord(segment, algs, table)) {
+        if (AppComponent.placeWord(segment, algs, table, word)) {
             return segment.length;
         }
         return 0;
     }
 
     public static findWordInDirection(word: string, xStart: number, yStart: number, xDir: number, yDir: number, table: Table): boolean {
+        if (word.length == 0)
+            return false;
         for (let i = 0; i < word.length; i++) {
             let x = xStart + i * xDir;
             let y = yStart + i * yDir;
@@ -182,12 +187,22 @@ export class AppComponent {
         return count;
     }
 
+    public static totalWordCount(word: string, table: Table): number {
+        let count = 0;
+        for (let i = 0; i < table.rows; i++) {
+            for (let j = 0; j < table.columns; j++) {
+                count += AppComponent.findWord(word, j, i, table);
+            }
+        }
+        return count;
+    }
+
     generate() {
         this.data.resize(this.height, this.width);
         this.word = this.word.toUpperCase();
         let arrangements = AppComponent.listAlgorithms(this.word.length, this.width, this.height);
         for (let i = 0; i < this.retryCount; i++) {
-            if (AppComponent.placeWord(this.word, arrangements, this.data)) {
+            if (AppComponent.placeWord(this.word, arrangements, this.data, '')) {
                 break;
             }
         }
@@ -198,14 +213,9 @@ export class AppComponent {
         for (let i = 0; i < attemptMax && remaining > 0; i++) {
             remaining -= AppComponent.placeWordPart(this.word, arrangements, this.data, min, max);
         }
-        while (remaining > 0) {
+        for (let i = 0; i < attemptMax && remaining > 0; i++) {
             remaining -= AppComponent.placeWordPart(this.word, arrangements, this.data, 1, 1);
         }
-        this.count = 0;
-        for (let i = 0; i < this.data.rows; i++) {
-            for (let j = 0; j < this.data.columns; j++) {
-                this.count += AppComponent.findWord(this.word, j, i, this.data);
-            }
-        }
+        this.count = AppComponent.totalWordCount(this.word, this.data);
     }
 }
