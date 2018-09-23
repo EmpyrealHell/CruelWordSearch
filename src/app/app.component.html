@@ -1,0 +1,12 @@
+<div>
+  <h1>Cruel Word Search</h1>
+  <input [(ngModel)]="width" placeholder="width" size="4">X<input [(ngModel)]="height" placeholder="height" size="4"><br>
+  <input [(ngModel)]="word" placeholder="enter word">
+  <button (click)="generate()">Generate</button>
+  <p>{{word}} occurs {{count}} times</p>
+  <table>
+      <tr *ngFor="let row of data.data">
+          <td *ngFor="let column of row">{{column}}</td>
+      </tr>
+  </table>
+</div>
